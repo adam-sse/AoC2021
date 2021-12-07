@@ -32,7 +32,7 @@ public class CrabFuel {
     
     private static int part2(int[] positions) {
         int alignPos1 = (int) Arrays.stream(positions).summaryStatistics().getAverage();
-        int alignPos2 = (int) Arrays.stream(positions).summaryStatistics().getAverage() + 1;
+        int alignPos2 = alignPos1 + 1;
         
         return Math.min(getCost(positions, alignPos1), getCost(positions, alignPos2));
     }
