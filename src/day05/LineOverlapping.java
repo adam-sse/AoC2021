@@ -5,40 +5,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import util.Point;
+
 public class LineOverlapping {
 
-	private static class Point {
-		int x;
-		int y;
-		Point(int x, int y) {
-			this.x = x;
-			this.y = y;
-		}
-		@Override
-		public int hashCode() {
-			return Objects.hash(x, y);
-		}
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (!(obj instanceof Point)) {
-				return false;
-			}
-			Point other = (Point) obj;
-			return x == other.x && y == other.y;
-		}
-		@Override
-		public String toString() {
-			return "(" + x + "," + y + ")";
-		}
-	}
-	
 	private static void part1(int x1, int y1, int x2, int y2, Map<Point, Integer> lineCoverage) {
 		if (x1 == x2) {
 			for (int y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) {
