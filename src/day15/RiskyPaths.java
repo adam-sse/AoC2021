@@ -3,20 +3,28 @@ package day15;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.function.ToIntFunction;
+import java.util.PriorityQueue;
 
 import util.Point;
 
 public class RiskyPaths {
 
+    private static class WeightedPoint {
+        final Point p;
+        final int weight;
+        WeightedPoint(Point p, int weight) {
+            this.p = p;
+            this.weight = weight;
+        }
+    }
+    
 	private static int part1(byte[][] graph) {
 		Point target = new Point(graph.length - 1, graph[0].length - 1);
 		
-		Set<Point> openSet = new HashSet<>();
-		openSet.add(new Point(0, 0));
+		PriorityQueue<WeightedPoint> openQueue = new PriorityQueue<>((wp1, wp2) -> Integer.compare(wp1.weight, wp2.weight));
+		
+		openQueue.add(new WeightedPoint(new Point(0, 0), 0));
 		
 		int[][] dist = new int[graph.length][graph[0].length];
 		for (int i = 0; i < dist.length; i++) {
@@ -25,26 +33,15 @@ public class RiskyPaths {
 			}
 		}
 		
+		
 		dist[0][0] = 0;
 		
-		ToIntFunction<Point> nextFunction = point -> {
-			int g = dist[point.x][point.y];
-			
-			int dx = target.x - point.x;
-			int dy = target.y - point.y;
-			
-			int h = (int) Math.sqrt(dx * dx + dy * dy);
-			return g + h;
-		};
-		
-		while (!openSet.isEmpty()) {
-			Point current = openSet.stream().sorted((p1, p2) -> Integer.compare(nextFunction.applyAsInt(p1), nextFunction.applyAsInt(p2))).findFirst().get();
+		while (!openQueue.isEmpty()) {
+			Point current = openQueue.poll().p;
 			
 			if (current.equals(target)) {
 				break;
 			}
-			
-			openSet.remove(current);
 			
 			Point n1 = new Point(current.x - 1, current.y);
 			Point n2 = new Point(current.x + 1, current.y);
@@ -56,7 +53,12 @@ public class RiskyPaths {
 					int alt = dist[current.x][current.y] + graph[neighbor.x][neighbor.y];
 					if (alt < dist[neighbor.x][neighbor.y]) {
 						dist[neighbor.x][neighbor.y] = alt;
-						openSet.add(neighbor);
+						
+						int dx = target.x - neighbor.x;
+						int dy = target.y - neighbor.y;
+						
+						WeightedPoint wn = new WeightedPoint(neighbor, alt + dx + dy);
+						openQueue.add(wn);
 					}
 				}
 			}
