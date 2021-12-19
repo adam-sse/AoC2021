@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 public class BeaconMap {
@@ -19,14 +18,14 @@ public class BeaconMap {
 		return (int) s1.stream().filter(s2::contains).count();
 	}
 	
-	private static boolean findOverlap(Set<V3> sensor1, Set<V3> sensor2, Map<Integer, Set<V3>> translations) {
+	private static boolean findOverlap(Set<V3> sensor1, Set<V3> sensor2, UnaryOperator<V3> rotation) {
 
 		for (V3 s1First : sensor1) {
 			for (V3 s2First : sensor2) {
-				V3 translation = s1First.sub(s2First);
+				V3 translation = s1First.sub(rotation.apply(s2First));
 				
 				Set<V3> s2Translated = sensor2.stream()
-						.map(v -> translation.add(v))
+						.map(v -> translation.add(rotation.apply(v)))
 						.collect(Collectors.toSet());
 				
 				int overlap = countOverlap(sensor1, s2Translated);
@@ -44,54 +43,35 @@ public class BeaconMap {
 	
 	public static boolean merge(Set<V3> sensor1, Set<V3> sensor2) {
 		
-		Map<Integer, Set<V3>> translations = new HashMap<>();
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.x, v.y, v.z))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.x, v.z, -v.y))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.x, -v.y, -v.z))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.x, -v.z, v.y))) return true;
 		
-		if (findOverlap(sensor1, sensor2, translations)) {
-			return true;
-		}
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.x, v.y, -v.z))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.x, v.z, v.y))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.x, -v.y, v.z))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.x, -v.z, -v.y))) return true;
 		
-		for (int rx = -1; rx <= 1; rx += 2) {
-			for (int ry = -1; ry <= 1; ry += 2) {
-				for (int rz = -1; rz <= 1; rz += 2) {
-					int xx = rx;
-					int yy = ry;
-					int zz = rz;
-					
-					if (findOverlap(sensor1, sensor2.stream()
-							.map(v -> new V3(v.x * xx, v.y * yy, v.z * zz))
-							.collect(Collectors.toSet()), translations)) {
-						return true;
-					}
-					if (findOverlap(sensor1, sensor2.stream()
-							.map(v -> new V3(v.x * xx, v.z * zz, v.y * yy))
-							.collect(Collectors.toSet()), translations)) {
-						return true;
-					}
-					
-					if (findOverlap(sensor1, sensor2.stream()
-							.map(v -> new V3(v.y * yy, v.z * zz, v.x * xx))
-							.collect(Collectors.toSet()), translations)) {
-						return true;
-					}
-					if (findOverlap(sensor1, sensor2.stream()
-							.map(v -> new V3(v.y * yy, v.x * xx, v.z * zz))
-							.collect(Collectors.toSet()), translations)) {
-						return true;
-					}
-					
-					if (findOverlap(sensor1, sensor2.stream()
-							.map(v -> new V3(v.z * zz, v.x * xx, v.y * yy))
-							.collect(Collectors.toSet()), translations)) {
-						return true;
-					}
-					if (findOverlap(sensor1, sensor2.stream()
-							.map(v -> new V3(v.z * zz, v.y * yy, v.x * xx))
-							.collect(Collectors.toSet()), translations)) {
-						return true;
-					}
-				}
-			}
-		}
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.y, -v.x, v.z))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.y, -v.z, -v.x))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.y, v.x, -v.z))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.y, v.z, v.x))) return true;
+		
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.y, v.x, v.z))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.y, v.z, -v.x))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.y, -v.x, -v.z))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.y, -v.z, v.x))) return true;
+		
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.z, v.y, -v.x))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.z, v.x, v.y))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.z, -v.y, v.x))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(v.z, -v.x, -v.y))) return true;
+		
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.z, v.y, v.x))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.z, v.x, -v.y))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.z, -v.y, -v.x))) return true;
+		if (findOverlap(sensor1, sensor2, v -> new V3(-v.z, -v.x, v.y))) return true;
 		
 		return false;
 	}
@@ -124,6 +104,7 @@ public class BeaconMap {
 		boolean[] done = new boolean[scanners.size()];
 		Set<V3> result = scanners.get(0);
 		done[0] = true;
+		long t0 = System.currentTimeMillis();
 		while (!containsFalse(done)) {
 			for (int i = 0; i < scanners.size(); i++) {
 				if (done[i]) continue;
@@ -134,6 +115,8 @@ public class BeaconMap {
 				}
 			}
 		}
+		long t1 = System.currentTimeMillis();
+		System.out.println((t1 - t0) + " ms");
 		
 		System.out.println(result.size());
 		
